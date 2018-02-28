@@ -22,10 +22,12 @@ This is done via the ``channels.security.websocket`` package, and the two
 ASGI middlewares it contains, ``OriginValidator`` and
 ``AllowedHostsOriginValidator``.
 
-``OriginValidator`` lets you restrict the valid options for the ``Origin``
-header that is sent with every WebSocket to say where it comes from. Just wrap
-it around your WebSocket application code like this, and pass it a list of
-valid domains as the second argument::
+A web browser sends an ``Origin`` header with every WebSocket to say where it
+comes from. The header generally consists of the URL scheme, host and port of
+the website which makes the request. ``OriginValidator`` lets you restrict the
+valid options for the ``Origin`` header. Just wrap it around your WebSocket
+application code like this, and pass it a list of valid patterns for the origin
+as the second argument::
 
     from channels.security.websocket import OriginValidator
 
@@ -37,9 +39,23 @@ valid domains as the second argument::
                     ...
                 ])
             ),
-            ["goodsite.com", "*.goodsite.com"],
+            [
+                # "goodsite.com" and all of its subdomains.
+                # Any scheme and any port is accepted.
+                ".goodsite.com",
+                # "greatsite.com" with an https:// scheme.
+                # Any port is accepted.
+                "https://greatsite.com",
+                # "wonderfulsite.com" with an https:// scheme over port 443.
+                "https://wonderfulsite.com:443",
+            ],
         ),
     })
+
+The special pattern ``*`` accepts any and all well-formed origins.
+
+If an ``Origin`` header is not sent (for instance, if the request is not made
+by a web browser), the connection is accepted.
 
 Often, the set of domains you want to restrict to is the same as the Django
 ``ALLOWED_HOSTS`` setting, which performs a similar security check for the
@@ -58,6 +74,8 @@ setting without having to re-declare the list::
             ),
         ),
     })
+
+Note that ``ALLOWED_HOSTS`` patterns accept any scheme and port.
 
 ``AllowedHostsOriginValidator`` will also automatically allow local connections
 through if the site is in ``DEBUG`` mode, much like Django's host validation.
