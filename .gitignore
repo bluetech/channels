@@ -4,6 +4,7 @@ build/
 docs/_build
 __pycache__/
 .cache
+.pytest_cache
 *.sqlite3
 .tox/
 *.swp
